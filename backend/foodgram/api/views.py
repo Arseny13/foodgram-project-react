@@ -1,3 +1,10 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from api.mixins import CreateListRetrieveViewSet
+from users.models import User
+from api.serializers import UserSerializer
 
-# Create your views here.
+
+class UserViewSet(CreateListRetrieveViewSet):
+    """Вьюсет для пользователей."""
+    queryset = User.objects.all()
+    serializer_class = UserSerializer

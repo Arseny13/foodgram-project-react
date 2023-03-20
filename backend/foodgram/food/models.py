@@ -6,11 +6,12 @@ User = get_user_model()
 
 class Tag(models.Model):
     """Класс тега."""
-    title = models.CharField(
+    name = models.CharField(
         'Название тега',
+        max_length=100,
         help_text='Введите название тега',
     )
-    color = models.CharField()
+    color = models.CharField(max_length=100,)
     slug = models.SlugField(
         'Cлаг тега',
         unique=True,
@@ -21,14 +22,16 @@ class Ingredient(models.Model):
     """Класс ингридиента."""
     title = models.CharField(
         'Название ингридиента',
+        max_length=100,
         help_text='Введите название ингридиента',
     )
-    count = models.PositiveSmallIntegerField(
+    amount = models.PositiveSmallIntegerField(
         'Количество ингридиента',
         help_text='Введите количество ингридиента'
     )
-    unit = models.CharField(
+    measurement_unit = models.CharField(
         'Единицы измерения ингридиента',
+        max_length=100,
         help_text='Введите eдиницу измерения ингридиента'
     )
 
@@ -51,22 +54,18 @@ class Recipe(models.Model):
         blank=True,
         upload_to=''
     )
-    description = models.TextField(
+    text = models.TextField(
         'Описание рецепта',
     )
-    ingredient = models.ManyToManyField(
-        Ingredient,
-
-    )
-    tag = models.ForeignKey(
+    tag = models.ManyToManyField(
         Tag,
         through='TagRecipe'
     )
-    ingredient = models.ForeignKey(
+    ingredient = models.ManyToManyField(
         Ingredient,
         through='IngredientRecipe'
     )
-    time = models.TimeField()
+    cooking_time = models.TimeField()
 
 
 class TagRecipe(models.Model):
