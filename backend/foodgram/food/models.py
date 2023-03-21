@@ -1,7 +1,5 @@
 from django.db import models
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+from users.models import User
 
 
 class Tag(models.Model):
@@ -20,14 +18,10 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     """Класс ингридиента."""
-    title = models.CharField(
+    name = models.CharField(
         'Название ингридиента',
         max_length=100,
         help_text='Введите название ингридиента',
-    )
-    amount = models.PositiveSmallIntegerField(
-        'Количество ингридиента',
-        help_text='Введите количество ингридиента'
     )
     measurement_unit = models.CharField(
         'Единицы измерения ингридиента',
@@ -81,6 +75,10 @@ class IngredientRecipe(models.Model):
     """Класс cвязи ингридиента и рецепта."""
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    amount = models.PositiveSmallIntegerField(
+        'Количество ингридиента',
+        help_text='Введите количество ингридиента'
+    )
 
     def __str__(self) -> str:
         return f'{self.ingredient} {self.recipe}'

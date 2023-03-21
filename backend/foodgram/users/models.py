@@ -53,3 +53,20 @@ class User(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ('id',)
+
+
+class Subscription(models.Model):
+    """Класс подписок."""
+    user = models.ForeignKey(
+        User,
+        related_name='user',
+        on_delete=models.CASCADE,
+    )
+    subscriber = models.ForeignKey(
+        User,
+        related_name='subscriber',
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self) -> str:
+        return self.user.username
