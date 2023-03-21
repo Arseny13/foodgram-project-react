@@ -40,8 +40,8 @@ class Recipe(models.Model):
     )
     title = models.CharField(
         max_length=100,
-        verbose_name='',
-        help_text='',
+        verbose_name='Название рецепта',
+        help_text='Введите название рецепта',
     )
     image = models.ImageField(
         '',
@@ -59,7 +59,14 @@ class Recipe(models.Model):
         Ingredient,
         through='IngredientRecipe'
     )
-    cooking_time = models.TimeField()
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления в минутах',
+        help_text='Введите время'
+    )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата публикации',
+        auto_now_add=True,
+    )
 
 
 class TagRecipe(models.Model):
@@ -82,3 +89,13 @@ class IngredientRecipe(models.Model):
 
     def __str__(self) -> str:
         return f'{self.ingredient} {self.recipe}'
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+        verbose_name='Пользователь'
+    )
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
