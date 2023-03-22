@@ -1,9 +1,11 @@
-from users.models import User
-from food.models import Tag, Recipe, Ingredient
+from users.models import User, Subscription
+from food.models import Tag, Recipe, Ingredient, Favorite, IngredientRecipe
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 import webcolors
 from djoser.serializers import TokenCreateSerializer
+from rest_framework.relations import StringRelatedField
+from rest_framework.validators import UniqueTogetherValidator
 
 
 class Hex2NameColor(serializers.Field):
@@ -28,12 +30,13 @@ class UserSerializer(serializers.ModelSerializer):
             RegexValidator(r'^[\w.@+-]+$', message='Проверьте username!'),
         )
     )
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         """Класс мета для модели пользователй."""
         model = User
         fields = (
-            'email', 'id', 'username',
+            'email', 'id', 'username', 'is_subscribed',
             'first_name', 'last_name', 'password'
         )
 
@@ -41,6 +44,13 @@ class UserSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         response.pop("password", None)
         return response
+
+    def get_is_subscribed(self, obj):
+        request = self.context['request']
+        user_id = request.user.id
+        return Subscription.objects.filter(
+            user_id=user_id, subscriber_id=obj.id
+        ).exists()
 
 
 class GetTokenSerializer(TokenCreateSerializer):
@@ -93,9 +103,100 @@ class IngredientSerializer(serializers.ModelSerializer):
                   'measurement_unit')
 
 
+class IngredientRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для игридиента."""
+    name = StringRelatedField(source='ingredient.name')
+    measurement_unit = StringRelatedField(source='ingredient.measurement_unit')
+
+    class Meta:
+        """Класс мета для модели ингридиент."""
+        model = IngredientRecipe
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для рецепта."""
+    tags = TagSerializer(many=True)
+    author = UserSerializer(read_only=True)
+    ingredients = IngredientRecipeSerializer(source='recipe', many=True)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         """Класс мета для модели рецепта."""
         model = Recipe
-        fields = ('id',)
+        fields = ('id', 'tags', 'author', 'ingredients',
+                  'is_favorited', 'name', 'image',
+                  'text', 'cooking_time'
+                  )
+
+    def get_is_favorited(self, obj):
+        request = self.context['request']
+        user_id = request.user.id
+        return Favorite.objects.filter(
+            user_id=user_id, recipe_id=obj.id
+        ).exists()
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    email = StringRelatedField(source='subscriber.email')
+    id = serializers.IntegerField(source='subscriber.id', read_only=True)
+    username = StringRelatedField(source='subscriber.username')
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    subscriber = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+    first_name = StringRelatedField(source='subscriber.first_name')
+    last_name = StringRelatedField(source='subscriber.last_name')
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        """Класс мета для модели рецепта."""
+        model = Subscription
+        fields = ('email', 'user', 'subscriber', 'id', 'username',
+                  'is_subscribed', 'first_name', 'last_name',
+                  'recipes', 'recipes_count'
+                  )
+
+        validators = (
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('user', 'subscriber')
+            ),
+        )
+
+    def get_is_subscribed(self, obj):
+        return Subscription.objects.filter(
+            user_id=obj.user.id, subscriber_id=obj.subscriber.id
+        ).exists()
+
+    def get_recipes(self, obj):
+        queryset = Recipe.objects.filter(author=obj.subscriber)
+        return RecipeSerializer(queryset, many=True).data
+
+    def get_recipes_count(self, obj):
+        count = len(Recipe.objects.filter(author=obj.subscriber))
+        return count
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='favorites.id', read_only=True)
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    recipe = RecipeSerializer(default="auto_replace_me")
+    name = StringRelatedField(source='favorites.name', read_only=True)
+    cooking_time = serializers.IntegerField(
+        source='favorites.cooking_time',
+        read_only=True
+    )
+
+    class Meta:
+        model = Favorite
+        fields = ('id', 'user', 'recipe', 'name', 'cooking_time')
+
+        validators = (
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe')
+            ),
+        )

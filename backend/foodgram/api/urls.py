@@ -2,7 +2,9 @@ from django.urls import include, path
 from rest_framework import routers
 from api.views import (
     UserViewSet, get_me, set_password,
-    TagViewSet, IngredientViewSet, CustomGetView
+    TagViewSet, IngredientViewSet, CustomGetView,
+    get_subscription, SubscribeViewSet,
+    FavoriteViewSet, RecipeViewSet
 )
 
 app_name = 'api'
@@ -26,7 +28,27 @@ router_v1.register(
     basename='ingredients'
 )
 
+router_v1.register(
+    r'users/(?P<user_id>\d+)/subscribe',
+    SubscribeViewSet,
+    basename='subscribe'
+)
+
+router_v1.register(
+    r'recipes/(?P<recipe_id>\d+)/favorite',
+    FavoriteViewSet,
+    basename='favorite'
+)
+
+router_v1.register(
+    r'recipes',
+    RecipeViewSet,
+    basename='recipes'
+)
+
+
 urlpatterns = [
+    path('users/subscriptions/', get_subscription, name='subscriptions'),
     path('auth/', include('djoser.urls.authtoken')),
     path('auth/token/login/', CustomGetView.as_view(), name='login'),
     path('users/me/', get_me, name='me'),

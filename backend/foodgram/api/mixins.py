@@ -13,5 +13,13 @@ class ListRetrieveViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     viewsets.GenericViewSet
 ):
-    """Класс ViewSet только для создания и получения объектов(-а)."""
+    """Класс ViewSet только для получения объектов(-а)."""
+    pass
+
+
+class CreateDestroyViewSet(
+    mixins.CreateModelMixin, mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    """Класс ViewSet только для создания и удаления объектов(-а)."""
     pass

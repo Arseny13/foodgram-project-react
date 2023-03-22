@@ -38,7 +38,7 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор'
     )
-    title = models.CharField(
+    name = models.CharField(
         max_length=100,
         verbose_name='Название рецепта',
         help_text='Введите название рецепта',
@@ -51,13 +51,15 @@ class Recipe(models.Model):
     text = models.TextField(
         'Описание рецепта',
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
-        through='TagRecipe'
+        through='TagRecipe',
+        related_name="recipe"
     )
-    ingredient = models.ManyToManyField(
+    ingredients = models.ManyToManyField(
         Ingredient,
-        through='IngredientRecipe'
+        through='IngredientRecipe',
+        related_name="recipe"
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления в минутах',
@@ -80,8 +82,16 @@ class TagRecipe(models.Model):
 
 class IngredientRecipe(models.Model):
     """Класс cвязи ингридиента и рецепта."""
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(
+        Ingredient,
+        related_name='ingredient',
+        on_delete=models.CASCADE
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        related_name='recipe',
+        on_delete=models.CASCADE
+    )
     amount = models.PositiveSmallIntegerField(
         'Количество ингридиента',
         help_text='Введите количество ингридиента'
@@ -95,7 +105,23 @@ class Favorite(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='favorites',
+        related_name='favorite',
         verbose_name='Пользователь'
     )
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites',
+    )
+
+    class Meta:
+        """Класс Meta для Review описание метаданных."""
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
+        ordering = ('-recipe__pub_date',)
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="unique_recipe_user"
+            ),
+        )

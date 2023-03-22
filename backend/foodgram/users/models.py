@@ -21,7 +21,7 @@ class User(AbstractUser):
     email = models.EmailField(
         'Адрес электронной почты',
         max_length=250,
-        unique=True
+        unique=True,
     )
     first_name = models.CharField(
         'Имя',
@@ -59,14 +59,25 @@ class Subscription(models.Model):
     """Класс подписок."""
     user = models.ForeignKey(
         User,
-        related_name='user',
+        related_name='follower',
         on_delete=models.CASCADE,
     )
     subscriber = models.ForeignKey(
         User,
-        related_name='subscriber',
+        related_name='following',
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        """Класс Meta для Review описание метаданных."""
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'subscriber'),
+                name="unique_subscriber_user"
+            ),
+        )
 
     def __str__(self) -> str:
         return self.user.username

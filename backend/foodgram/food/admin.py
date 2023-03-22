@@ -1,9 +1,9 @@
 from django.contrib import admin
-from food.models import Tag, Recipe, Ingredient
+from food.models import Tag, Recipe, Ingredient, Favorite
 
 
 @admin.register(Tag)
-class IngredientAdmin(admin.ModelAdmin):
+class TagAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'name',
                     'color',
@@ -26,25 +26,34 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 class RecipeTagInline(admin.TabularInline):
-    model = Recipe.tag.through
+    model = Recipe.tags.through
     extra = 2
 
 
 class RecipeIngredientInline(admin.TabularInline):
-    model = Recipe.ingredient.through
+    model = Recipe.ingredients.through
     extra = 3
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('pk',
-                    'title',
+                    'name',
                     'author',
                     'pub_date'
                     )
-    list_editable = ('title',)
+    list_editable = ('name',)
     inlines = (
         RecipeTagInline, RecipeIngredientInline,
     )
-    search_fields = ('author', 'title', 'tag')
+    search_fields = ('author', 'name', 'tag')
+    empty_value_display = '-пусто)))-'
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('pk',
+                    'user',
+                    'recipe',
+                    )
     empty_value_display = '-пусто)))-'
