@@ -1,8 +1,10 @@
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets, filters
 from api.mixins import (
     CreateListRetrieveViewSet, ListRetrieveViewSet,
     CreateDestroyViewSet,
 )
+from django_filters.rest_framework import DjangoFilterBackend
+from api.filters import RecipeFilter
 from users.models import User, Subscription
 from food.models import Tag, Ingredient, Favorite, Recipe
 from api.serializers import (
@@ -42,6 +44,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для пользователей."""
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = RecipeFilter
+    ordering_fields = ('pub_date',)
+    ordering = ('pub_date',)
 
 
 @api_view(['GET'])
@@ -49,7 +55,6 @@ def get_subscription(request):
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
         serializer = SubscriptionSerializer(user.follower.all(), many=True)
-        print(user.follower.all())
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(
         'Вы не авторизованы',
