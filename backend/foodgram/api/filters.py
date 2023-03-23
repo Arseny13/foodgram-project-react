@@ -1,5 +1,5 @@
 import django_filters
-from food.models import Recipe, Favorite
+from food.models import Recipe
 
 
 class RecipeFilter(django_filters.FilterSet):

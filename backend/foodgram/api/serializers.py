@@ -1,11 +1,14 @@
 from users.models import User, Subscription
-from food.models import Tag, Recipe, Ingredient, Favorite, IngredientRecipe
+from food.models import (
+    Tag, Recipe, Ingredient,
+    Favorite, IngredientRecipe, IngredientRecipe,
+    TagRecipe,
+)
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 import webcolors
 from djoser.serializers import TokenCreateSerializer
 from rest_framework.relations import StringRelatedField
-from rest_framework.validators import UniqueTogetherValidator
 
 
 class Hex2NameColor(serializers.Field):
@@ -92,6 +95,7 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ('id', 'name',
                   'color', 'slug')
+        read_only_fields = ('name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -105,8 +109,11 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для игридиента."""
-    name = StringRelatedField(source='ingredient.name')
-    measurement_unit = StringRelatedField(source='ingredient.measurement_unit')
+    id = serializers.IntegerField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit'
+    )
 
     class Meta:
         """Класс мета для модели ингридиент."""
@@ -137,14 +144,90 @@ class RecipeSerializer(serializers.ModelSerializer):
         ).exists()
 
 
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Tag.objects.all()
+    )
+    ingredients = IngredientRecipeSerializer(
+        many=True
+    )
+
+    class Meta:
+        """Класс мета для модели рецепта."""
+        model = Recipe
+        fields = ('id', 'name', 'author',
+                  'tags', 'ingredients',
+                  'text', 'cooking_time'
+                  )
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(**validated_data)
+        for tag in tags:
+            TagRecipe.objects.create(
+                tag=tag,
+                recipe=recipe,
+            )
+        for ingredient in ingredients:
+            ingredient_id = ingredient.get('ingredient').get('id')
+            current_ingredient, status = Ingredient.objects.get_or_create(
+                pk=ingredient_id)
+            IngredientRecipe.objects.create(
+                ingredient=current_ingredient,
+                recipe=recipe,
+                amount=ingredient.get('amount'))
+        return recipe
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        Recipe.objects.filter(id=instance.id).update(**validated_data)
+        for tag in instance.tags.all():
+            if tag in tags:
+                tags.remove(tag)
+                continue
+            TagRecipe.objects.filter(recipe=instance, tag=tag).delete()
+        for tag in tags:
+            TagRecipe.objects.create(
+                tag=tag,
+                recipe=instance,
+            )
+        for ingredient in instance.ingredients.all():
+            IngredientRecipe.objects.filter(
+                recipe=instance,
+                ingredient=ingredient
+            ).delete()
+        for ingredient in ingredients:
+            current_ingredient, status = Ingredient.objects.get_or_create(
+                pk=ingredient.get('ingredient').get('id'))
+            IngredientRecipe.objects.create(
+                ingredient=current_ingredient,
+                recipe=instance,
+                amount=ingredient.get('amount'))
+        instance = Recipe.objects.filter(id=instance.id).get()
+        return instance
+
+    def to_representation(self, instance):
+        self.fields.pop('ingredients')
+        representation = super().to_representation(instance)
+        representation['tags'] = TagSerializer(
+            Tag.objects.filter(id__in=instance.tags.all()),
+            many=True
+        ).data
+        representation['ingredients'] = IngredientRecipeSerializer(
+            IngredientRecipe.objects.filter(recipe=instance),
+            many=True
+        ).data
+        return representation
+
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     email = StringRelatedField(source='subscriber.email')
     id = serializers.IntegerField(source='subscriber.id', read_only=True)
     username = StringRelatedField(source='subscriber.username')
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    subscriber = serializers.HiddenField(
-        default=serializers.CurrentUserDefault()
-    )
     first_name = StringRelatedField(source='subscriber.first_name')
     last_name = StringRelatedField(source='subscriber.last_name')
     is_subscribed = serializers.SerializerMethodField()
@@ -158,13 +241,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
                   'is_subscribed', 'first_name', 'last_name',
                   'recipes', 'recipes_count'
                   )
-
-        validators = (
-            UniqueTogetherValidator(
-                queryset=Subscription.objects.all(),
-                fields=('user', 'subscriber')
-            ),
-        )
 
     def get_is_subscribed(self, obj):
         return Subscription.objects.filter(
@@ -182,8 +258,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 class FavoriteSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='favorites.id', read_only=True)
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    recipe = RecipeSerializer(default="auto_replace_me")
     name = StringRelatedField(source='favorites.name', read_only=True)
     cooking_time = serializers.IntegerField(
         source='favorites.cooking_time',
@@ -193,10 +267,3 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ('id', 'user', 'recipe', 'name', 'cooking_time')
-
-        validators = (
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=('user', 'recipe')
-            ),
-        )

@@ -12,7 +12,7 @@ from api.serializers import (
     MeSerializer, PasswordSerializer,
     TagSerializer, IngredientSerializer,
     SubscriptionSerializer, FavoriteSerializer,
-    RecipeSerializer,
+    RecipeSerializer, RecipeCreateSerializer
 )
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
@@ -43,11 +43,25 @@ class IngredientViewSet(ListRetrieveViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет для пользователей."""
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = RecipeFilter
     ordering_fields = ('pub_date',)
     ordering = ('pub_date',)
+
+    def get_serializer_class(self):
+        """Метод изменения класса сериализера при разных методах."""
+        if (
+            self.action == 'create'
+            or self.action == 'update'
+            or self.action == 'partial_update'
+        ):
+            return RecipeCreateSerializer
+        return RecipeSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+        )
 
 
 @api_view(['GET'])

@@ -46,7 +46,8 @@ class Recipe(models.Model):
     image = models.ImageField(
         '',
         blank=True,
-        upload_to=''
+        upload_to='',
+        null=True,
     )
     text = models.TextField(
         'Описание рецепта',
@@ -54,12 +55,10 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(
         Tag,
         through='TagRecipe',
-        related_name="recipe"
     )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientRecipe',
-        related_name="recipe"
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления в минутах',
