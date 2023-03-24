@@ -1,6 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
-
+from django.db import models
 
 USER = 'user'
 ADMIN = 'admin'
@@ -20,7 +19,7 @@ class User(AbstractUser):
     )
     email = models.EmailField(
         'Адрес электронной почты',
-        max_length=250,
+        max_length=254,
         unique=True,
     )
     first_name = models.CharField(

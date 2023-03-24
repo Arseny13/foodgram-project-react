@@ -1,15 +1,13 @@
-from users.models import User, Subscription
-from food.models import (
-    Tag, Recipe, Ingredient,
-    Favorite, IngredientRecipe, IngredientRecipe,
-    TagRecipe, ShoppingCart
-)
-from django.shortcuts import get_object_or_404
-from rest_framework import serializers
-from django.core.validators import RegexValidator
 import webcolors
+from django.core.validators import RegexValidator
+from django.shortcuts import get_object_or_404
 from djoser.serializers import TokenCreateSerializer
+from rest_framework import serializers
 from rest_framework.relations import StringRelatedField
+
+from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                         ShoppingCart, Tag, TagRecipe)
+from users.models import Subscription, User
 
 
 class Hex2NameColor(serializers.Field):
@@ -100,7 +98,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для игридиента."""
+    """Сериализатор для игредиента."""
     class Meta:
         """Класс мета для модели ингридиент."""
         model = Ingredient
@@ -109,7 +107,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для игридиента."""
+    """Сериализатор для игредиента рецепта."""
     id = serializers.IntegerField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -117,13 +115,13 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        """Класс мета для модели ингридиент."""
+        """Класс мета для модели ингредиент рецепт."""
         model = IngredientRecipe
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для рецепта."""
+    """Сериализатор для получения рецепта."""
     tags = TagSerializer(many=True)
     author = UserSerializer(read_only=True, )
     ingredients = IngredientRecipeSerializer(source='recipe', many=True)
@@ -155,6 +153,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания и изменения рецепта."""
     author = UserSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -235,6 +234,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписок."""
     email = StringRelatedField(source='subscriber.email')
     id = serializers.IntegerField(source='subscriber.id', read_only=True)
     username = StringRelatedField(source='subscriber.username')
@@ -289,6 +289,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для избранного."""
     id = serializers.IntegerField(source='favorites.id', read_only=True)
     name = StringRelatedField(source='favorites.name', read_only=True)
     cooking_time = serializers.IntegerField(
@@ -314,6 +315,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка покупок."""
     id = serializers.IntegerField(source='recipe.id', read_only=True)
     name = StringRelatedField(source='recipe.name', read_only=True)
     cooking_time = serializers.IntegerField(

@@ -1,26 +1,22 @@
-from rest_framework import status, viewsets, filters
-from api.mixins import (
-    CreateListRetrieveViewSet, ListRetrieveViewSet,
-    CreateDestroyViewSet,
-)
-from django_filters.rest_framework import DjangoFilterBackend
-from api.filters import RecipeFilter
-from users.models import User, Subscription
-from food.models import Tag, Ingredient, Favorite, Recipe, ShoppingCart
-from api.serializers import (
-    UserSerializer, GetTokenSerializer,
-    MeSerializer, PasswordSerializer,
-    TagSerializer, IngredientSerializer,
-    SubscriptionSerializer, FavoriteSerializer,
-    RecipeSerializer, RecipeCreateSerializer,
-    ShoppingCartSerializer
-)
-from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import TokenCreateView
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from api.filters import RecipeFilter
+from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
+                        ListRetrieveViewSet)
 from api.permissions import IsReadOnly
+from api.serializers import (FavoriteSerializer, GetTokenSerializer,
+                             IngredientSerializer, MeSerializer,
+                             PasswordSerializer, RecipeCreateSerializer,
+                             RecipeSerializer, ShoppingCartSerializer,
+                             SubscriptionSerializer, TagSerializer,
+                             UserSerializer)
+from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from users.models import Subscription, User
 
 
 class UserViewSet(CreateListRetrieveViewSet):
@@ -30,19 +26,19 @@ class UserViewSet(CreateListRetrieveViewSet):
 
 
 class TagViewSet(ListRetrieveViewSet):
-    """Вьюсет для пользователей."""
+    """Вьюсет для тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class IngredientViewSet(ListRetrieveViewSet):
-    """Вьюсет для пользователей."""
+    """Вьюсет для ингридиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """Вьюсет для пользователей."""
+    """Вьюсет для рецептов."""
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = RecipeFilter
@@ -67,6 +63,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 def get_subscription(request):
+    """Вьюха для получение подписок авторизаваного пользователя."""
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
         serializer = SubscriptionSerializer(
@@ -82,6 +79,7 @@ def get_subscription(request):
 
 
 class SubscribeViewSet(CreateDestroyViewSet):
+    """Вьюсет для подписок."""
     serializer_class = SubscriptionSerializer
     permission_classes = (IsReadOnly,)
 
@@ -114,6 +112,7 @@ class SubscribeViewSet(CreateDestroyViewSet):
 
 
 class FavoriteViewSet(CreateDestroyViewSet):
+    """Вьюсет для избранного."""
     serializer_class = FavoriteSerializer
     permission_classes = (IsReadOnly,)
 
@@ -147,6 +146,7 @@ class FavoriteViewSet(CreateDestroyViewSet):
 
 @api_view(['GET'])
 def get_ShoppingCart(request):
+    """Вьюха для получение списка покупок."""
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
         serializer = ShoppingCartSerializer(
@@ -162,6 +162,7 @@ def get_ShoppingCart(request):
 
 
 class ShoppingCartViewSet(CreateDestroyViewSet):
+    """Вьюсет для списка покупок."""
     serializer_class = ShoppingCartSerializer
     permission_classes = (IsReadOnly,)
 
@@ -194,29 +195,13 @@ class ShoppingCartViewSet(CreateDestroyViewSet):
 
 
 class CustomGetView(TokenCreateView):
+    """Вьюсет для получения токена."""
     serializer_class = GetTokenSerializer
-
-
-@api_view(['POST'])
-def get_token(request):
-    """Получение токена."""
-    serializer = GetTokenSerializer(data=request.data)
-    email = request.data.get('email')
-    password = request.data.get('password')
-    if serializer.is_valid():
-        user = get_object_or_404(
-            User, password=password, email=email
-        )
-        token = AccessToken.for_user(user)
-        return Response(
-            {'auth_token': f'{token}'},
-            status=status.HTTP_201_CREATED
-        )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
 def get_me(request):
+    """Вьюха для получение информации о текущем пользователе."""
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
         serializer = MeSerializer(user)
@@ -229,6 +214,7 @@ def get_me(request):
 
 @api_view(['POST'])
 def set_password(request):
+    """Вьюха для изменения пароля."""
     serializer = PasswordSerializer(data=request.data)
     current_password = request.data.get('current_password')
     new_password = request.data.get('new_password')
