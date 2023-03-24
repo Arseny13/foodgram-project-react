@@ -6,13 +6,14 @@ from api.mixins import (
 from django_filters.rest_framework import DjangoFilterBackend
 from api.filters import RecipeFilter
 from users.models import User, Subscription
-from food.models import Tag, Ingredient, Favorite, Recipe
+from food.models import Tag, Ingredient, Favorite, Recipe, ShoppingCart
 from api.serializers import (
     UserSerializer, GetTokenSerializer,
     MeSerializer, PasswordSerializer,
     TagSerializer, IngredientSerializer,
     SubscriptionSerializer, FavoriteSerializer,
-    RecipeSerializer, RecipeCreateSerializer
+    RecipeSerializer, RecipeCreateSerializer,
+    ShoppingCartSerializer
 )
 from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
@@ -68,7 +69,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 def get_subscription(request):
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
-        serializer = SubscriptionSerializer(user.follower.all(), many=True)
+        serializer = SubscriptionSerializer(
+            user.follower.all(),
+            many=True,
+            context={'request': request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(
         'Вы не авторизованы',
@@ -85,6 +90,11 @@ class SubscribeViewSet(CreateDestroyViewSet):
 
     def get_queryset(self):
         return self.request.user.follower.all()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['subscription_id'] = self.kwargs.get('user_id')
+        return context
 
     def perform_create(self, serializer):
         serializer.save(
@@ -119,6 +129,11 @@ class FavoriteViewSet(CreateDestroyViewSet):
             recipe=self.get_recipe()
         )
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['recipe_id'] = self.kwargs.get('recipe_id')
+        return context
+
     def delete(self, request, recipe_id):
         """Отписаться от автора."""
         favorite = get_object_or_404(
@@ -127,6 +142,54 @@ class FavoriteViewSet(CreateDestroyViewSet):
             recipe=get_object_or_404(Recipe, id=recipe_id),
         )
         favorite.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+def get_ShoppingCart(request):
+    if request.user.is_authenticated:
+        user = get_object_or_404(User, id=request.user.id)
+        serializer = ShoppingCartSerializer(
+            user.user.all(),
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(
+        'Вы не авторизованы',
+        status=status.HTTP_401_UNAUTHORIZED
+    )
+
+
+class ShoppingCartViewSet(CreateDestroyViewSet):
+    serializer_class = ShoppingCartSerializer
+    permission_classes = (IsReadOnly,)
+
+    def get_recipe(self):
+        return get_object_or_404(Recipe, pk=self.kwargs.get('recipe_id'))
+
+    def get_queryset(self):
+        return self.request.user.shoppingcart.all()
+
+    def perform_create(self, serializer):
+        serializer.save(
+            user=self.request.user,
+            recipe=self.get_recipe()
+        )
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['recipe_id'] = self.kwargs.get('recipe_id')
+        return context
+
+    def delete(self, request, recipe_id):
+        """Отписаться от автора."""
+        shoppingcart = get_object_or_404(
+            ShoppingCart,
+            user=request.user,
+            recipe=get_object_or_404(Recipe, id=recipe_id),
+        )
+        shoppingcart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

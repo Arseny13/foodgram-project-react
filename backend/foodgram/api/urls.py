@@ -4,7 +4,8 @@ from api.views import (
     UserViewSet, get_me, set_password,
     TagViewSet, IngredientViewSet, CustomGetView,
     get_subscription, SubscribeViewSet,
-    FavoriteViewSet, RecipeViewSet
+    FavoriteViewSet, RecipeViewSet,
+    ShoppingCartViewSet, get_ShoppingCart
 )
 
 app_name = 'api'
@@ -40,6 +41,13 @@ router_v1.register(
     basename='favorite'
 )
 
+
+router_v1.register(
+    r'recipes/(?P<recipe_id>\d+)/shopping_cart',
+    ShoppingCartViewSet,
+    basename='shoppingcart'
+)
+
 router_v1.register(
     r'recipes',
     RecipeViewSet,
@@ -48,6 +56,11 @@ router_v1.register(
 
 
 urlpatterns = [
+    path(
+        'recipes/download_shopping_cart/',
+        get_ShoppingCart,
+        name='get_ShoppingCart'
+    ),
     path('users/subscriptions/', get_subscription, name='subscriptions'),
     path('auth/', include('djoser.urls.authtoken')),
     path('auth/token/login/', CustomGetView.as_view(), name='login'),
