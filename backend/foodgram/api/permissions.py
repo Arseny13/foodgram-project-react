@@ -2,7 +2,7 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsReadOnly(BasePermission):
-    """Перминш для моделей Review, Comment."""
+    """Перминш для изменение моделей только авторам или админу."""
     def has_permission(self, request, view):
         """GET-запрос не требует авторизации."""
         return request.method in SAFE_METHODS or request.user.is_authenticated

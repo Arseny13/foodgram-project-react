@@ -1,13 +1,25 @@
 import webcolors
+import base64
+
 from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
-from djoser.serializers import TokenCreateSerializer
 from rest_framework import serializers
 from rest_framework.relations import StringRelatedField
+from django.core.files.base import ContentFile
 
 from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                          ShoppingCart, Tag, TagRecipe)
 from users.models import Subscription, User
+
+
+class Base64ImageField(serializers.ImageField):
+    """Класс раскодировки изображения."""
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+        return super().to_internal_value(data)
 
 
 class Hex2NameColor(serializers.Field):
@@ -53,14 +65,6 @@ class UserSerializer(serializers.ModelSerializer):
         return Subscription.objects.filter(
             user_id=user_id, subscriber_id=obj.id
         ).exists()
-
-
-class GetTokenSerializer(TokenCreateSerializer):
-    """Сериализатор для получения токена."""
-    class Meta:
-        """Класс мета для токена."""
-        model = User
-        fields = ('email', 'password')
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -127,6 +131,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeSerializer(source='recipe', many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         """Класс мета для модели рецепта."""
@@ -162,12 +167,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientRecipeSerializer(
         many=True
     )
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         """Класс мета для модели рецепта."""
         model = Recipe
         fields = ('id', 'name', 'author',
                   'tags', 'ingredients',
+                  'image',
                   'text', 'cooking_time'
                   )
 

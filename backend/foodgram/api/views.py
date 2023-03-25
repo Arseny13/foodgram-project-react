@@ -1,15 +1,16 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import TokenCreateView
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from djoser.views import UserViewSet
+from django.contrib.auth.hashers import make_password, check_password
 
 from api.filters import RecipeFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
                         ListRetrieveViewSet)
 from api.permissions import IsReadOnly
-from api.serializers import (FavoriteSerializer, GetTokenSerializer,
+from api.serializers import (FavoriteSerializer,
                              IngredientSerializer, MeSerializer,
                              PasswordSerializer, RecipeCreateSerializer,
                              RecipeSerializer, ShoppingCartSerializer,
@@ -23,6 +24,13 @@ class UserViewSet(CreateListRetrieveViewSet):
     """Вьюсет для пользователей."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def perform_create(self, serializer):
+        if ('password' in self.request.data):
+            password = make_password(self.request.data['password'])
+            serializer.save(password=password)
+        else:
+            serializer.save()
 
 
 class TagViewSet(ListRetrieveViewSet):
@@ -42,6 +50,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = RecipeFilter
+    permission_classes = (IsReadOnly,)
     ordering_fields = ('pub_date',)
     ordering = ('pub_date',)
 
@@ -194,11 +203,6 @@ class ShoppingCartViewSet(CreateDestroyViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CustomGetView(TokenCreateView):
-    """Вьюсет для получения токена."""
-    serializer_class = GetTokenSerializer
-
-
 @api_view(['GET'])
 def get_me(request):
     """Вьюха для получение информации о текущем пользователе."""
@@ -223,17 +227,17 @@ def set_password(request):
             user = get_object_or_404(
                 User, id=request.user.id
             )
-            if user.password != current_password:
-                return Response(
-                    'Не верный пароль',
-                    status=status.HTTP_400_BAD_REQUEST
+            if check_password(current_password, user.password):
+                User.objects.filter(id=request.user.id).update(
+                    password=make_password(new_password)
                 )
-            User.objects.filter(id=request.user.id).update(
-                password=new_password
-            )
+                return Response(
+                    'Пароль изменен',
+                    status=status.HTTP_204_NO_CONTENT
+                )
             return Response(
-                'Пароль изменен',
-                status=status.HTTP_204_NO_CONTENT
+                'Не верный пароль',
+                status=status.HTTP_400_BAD_REQUEST
             )
         return Response(
             'Вы не авторизованы',

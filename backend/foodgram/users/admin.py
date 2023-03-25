@@ -4,7 +4,7 @@ from users.models import Subscription, User
 
 
 @admin.register(User)
-class IngredientAdmin(admin.ModelAdmin):
+class UserAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'username',
                     'email'
@@ -15,7 +15,7 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 @admin.register(Subscription)
-class IngredientAdmin(admin.ModelAdmin):
+class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'user',
                     'subscriber'

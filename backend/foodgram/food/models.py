@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 from users.models import User
 
@@ -40,14 +41,14 @@ class Recipe(models.Model):
         verbose_name='Автор'
     )
     name = models.CharField(
-        max_length=100,
+        max_length=200,
         verbose_name='Название рецепта',
         help_text='Введите название рецепта',
     )
     image = models.ImageField(
-        '',
+        'Картинка рецепта',
         blank=True,
-        upload_to='',
+        upload_to='recipe/',
         null=True,
     )
     text = models.TextField(
@@ -63,7 +64,10 @@ class Recipe(models.Model):
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления в минутах',
-        help_text='Введите время'
+        help_text='Введите время',
+        validators=(
+            MinValueValidator(1),
+        )
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
@@ -102,6 +106,7 @@ class IngredientRecipe(models.Model):
 
 
 class Favorite(models.Model):
+    """Класс избранного."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -115,19 +120,20 @@ class Favorite(models.Model):
     )
 
     class Meta:
-        """Класс Meta для Review описание метаданных."""
+        """Класс Meta для Favorite описание метаданных."""
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
         ordering = ('-recipe__pub_date',)
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
-                name="unique_recipe_user"
+                name="unique_recipe_user_favorite"
             ),
         )
 
 
 class ShoppingCart(models.Model):
+    """Класс списка покупок."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -139,3 +145,15 @@ class ShoppingCart(models.Model):
         on_delete=models.CASCADE,
         related_name='shoppingcart',
     )
+
+    class Meta:
+        """Класс Meta для ShoppingCart описание метаданных."""
+        verbose_name = 'СписокПокупок'
+        verbose_name_plural = 'СпискиПокупок'
+        ordering = ('-recipe__pub_date',)
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name="unique_recipe_user_shoppingcart"
+            ),
+        )

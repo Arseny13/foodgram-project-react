@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
 USER = 'user'
@@ -8,6 +8,43 @@ CHOICES = (
     (USER, 'Пользователь'),
     (ADMIN, 'Администратор')
 )
+
+
+class CustomUserManager(BaseUserManager):
+    """Класс для создания обычного пользователя/суперпользователя."""
+
+    def create_superuser(self, username, email, password, **kwargs):
+        """
+        Cоздает и сохраняет суперпользователя
+        с указанным адресом электронной почты и паролем.
+        """
+        if password is None:
+            raise TypeError('Superusers must have a password.')
+
+        kwargs.setdefault('is_staff', True)
+        kwargs.setdefault('is_superuser', True)
+        kwargs.setdefault('is_active', True)
+
+        return self.create_user(
+            username=username,
+            email=email,
+            password=password,
+            **kwargs
+        )
+
+    def create_user(self, username, email, password=None, **kwargs):
+        """
+        Cоздает и сохраняет пользователя
+        с указанным адресом электронной почты и паролем.
+        """
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **kwargs)
+        if password is None:
+            user.set_unusable_password()
+        else:
+            user.set_password(password)
+        user.save()
+        return user
 
 
 class User(AbstractUser):
@@ -30,6 +67,10 @@ class User(AbstractUser):
     last_name = models.CharField(
         'Фамилия',
         max_length=150,
+    )
+    password = models.CharField(
+        'Пароль',
+        max_length=150
     )
     role = models.CharField(
         'Роль',
@@ -68,7 +109,7 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        """Класс Meta для Review описание метаданных."""
+        """Класс Meta для Subscription описание метаданных."""
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = (

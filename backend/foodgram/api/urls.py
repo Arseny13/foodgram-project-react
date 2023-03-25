@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from api.views import (CustomGetView, FavoriteViewSet, IngredientViewSet,
+from api.views import (FavoriteViewSet, IngredientViewSet,
                        RecipeViewSet, ShoppingCartViewSet, SubscribeViewSet,
                        TagViewSet, UserViewSet, get_me, get_ShoppingCart,
                        get_subscription, set_password)
@@ -61,7 +61,6 @@ urlpatterns = [
     ),
     path('users/subscriptions/', get_subscription, name='subscriptions'),
     path('auth/', include('djoser.urls.authtoken')),
-    path('auth/token/login/', CustomGetView.as_view(), name='login'),
     path('users/me/', get_me, name='me'),
     path('users/set_password/', set_password, name='set_password'),
     path('', include(router_v1.urls)),
