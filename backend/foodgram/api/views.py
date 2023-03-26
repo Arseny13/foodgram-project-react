@@ -18,6 +18,7 @@ from api.serializers import (FavoriteSerializer,
                              MyUserSerializer, GetShoppingCartSerializer)
 from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription, User
+from django.http import HttpResponse
 
 
 class UserViewSet(CreateListRetrieveViewSet):
@@ -162,7 +163,10 @@ def get_ShoppingCart(request):
             user.user.all(),
             context={'request': request}
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="filename.txt"'
+        response.write(serializer.data)
+        return response
     return Response(
         'Вы не авторизованы',
         status=status.HTTP_401_UNAUTHORIZED
