@@ -1,6 +1,4 @@
 import os
-from datetime import timedelta
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -132,9 +130,4 @@ AUTH_USER_MODEL = 'users.User'
 DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'LOGIN_FIELD': 'email',
-}
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
-    'AUTH_HEADER_TYPES': ('Bearer',),
 }

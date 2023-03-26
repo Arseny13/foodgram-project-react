@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from api.views import (FavoriteViewSet, IngredientViewSet, RecipeViewSet,
                        ShoppingCartViewSet, SubscribeViewSet, TagViewSet,
-                       UserViewSet, get_me, get_ShoppingCart, get_subscription,
+                       UserViewSet, get_me, get_ShoppingCart, GetSubscription,
                        set_password)
 
 app_name = 'api'
@@ -59,7 +59,11 @@ urlpatterns = [
         get_ShoppingCart,
         name='get_ShoppingCart'
     ),
-    path('users/subscriptions/', get_subscription, name='subscriptions'),
+    path(
+        'users/subscriptions/',
+        GetSubscription.as_view(),
+        name='subscriptions'
+    ),
     path('auth/', include('djoser.urls.authtoken')),
     path('users/me/', get_me, name='me'),
     path('users/set_password/', set_password, name='set_password'),

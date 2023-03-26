@@ -6,6 +6,8 @@ from djoser.views import UserViewSet
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.pagination import LimitOffsetPagination
 
 from api.filters import RecipeFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
@@ -71,21 +73,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
 
-@api_view(['GET'])
-def get_subscription(request):
-    """Вьюха для получение подписок авторизаваного пользователя."""
-    if request.user.is_authenticated:
-        user = get_object_or_404(User, id=request.user.id)
-        serializer = GetShoppingCartSerializer(
-            user.follower.all(),
-            many=True,
-            context={'request': request}
+class GetSubscription(APIView, LimitOffsetPagination):
+    """Класс для переопределения запросов GET."""
+
+    def get(self, request):
+        """Получение подписок авторизаваного пользователя."""
+        if request.user.is_authenticated:
+            user = get_object_or_404(User, id=request.user.id)
+            quersy = user.follower.all()
+            results = self.paginate_queryset(quersy, request, view=self)
+            serializer = SubscriptionSerializer(
+                results,
+                many=True,
+                context={'request': request}
+            )
+
+            return self.get_paginated_response(serializer.data)
+        return Response(
+            'Вы не авторизованы',
+            status=status.HTTP_401_UNAUTHORIZED
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(
-        'Вы не авторизованы',
-        status=status.HTTP_401_UNAUTHORIZED
-    )
 
 
 class SubscribeViewSet(CreateDestroyViewSet):

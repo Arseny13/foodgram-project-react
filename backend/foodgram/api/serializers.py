@@ -325,7 +325,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
-    """Сериализатор для списка покупок."""
+    """Сериализатор для создания списка покупок."""
     id = serializers.IntegerField(source='recipe.id', read_only=True)
     name = StringRelatedField(source='recipe.name', read_only=True)
     cooking_time = serializers.IntegerField(
@@ -351,7 +351,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
 
 class GetShoppingCartSerializer(serializers.ModelSerializer):
-    """Сериализатор для списка покупок."""
+    """Сериализатор для получения списка покупок."""
     class Meta:
         model = ShoppingCart
 
