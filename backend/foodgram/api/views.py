@@ -1,24 +1,24 @@
+from django.contrib.auth.hashers import check_password, make_password
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from djoser.views import UserViewSet
-from django.contrib.auth.hashers import make_password, check_password
 
 from api.filters import RecipeFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
                         ListRetrieveViewSet)
 from api.permissions import IsReadOnly
-from api.serializers import (FavoriteSerializer,
+from api.serializers import (FavoriteSerializer, GetShoppingCartSerializer,
                              IngredientSerializer, MeSerializer,
-                             PasswordSerializer, RecipeCreateSerializer,
-                             RecipeSerializer, ShoppingCartSerializer,
-                             SubscriptionSerializer, TagSerializer,
-                             MyUserSerializer, GetShoppingCartSerializer)
+                             MyUserSerializer, PasswordSerializer,
+                             RecipeCreateSerializer, RecipeSerializer,
+                             ShoppingCartSerializer, SubscriptionSerializer,
+                             TagSerializer)
 from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription, User
-from django.http import HttpResponse
 
 
 class UserViewSet(CreateListRetrieveViewSet):
