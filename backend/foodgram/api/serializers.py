@@ -5,11 +5,14 @@ from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import StringRelatedField
+from rest_framework.validators import UniqueValidator
 from django.core.files.base import ContentFile
+
 
 from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                          ShoppingCart, Tag, TagRecipe)
 from users.models import Subscription, User
+from django.db.models import Sum
 
 
 class Base64ImageField(serializers.ImageField):
@@ -35,13 +38,14 @@ class Hex2NameColor(serializers.Field):
         return data
 
 
-class UserSerializer(serializers.ModelSerializer):
+class MyUserSerializer(serializers.ModelSerializer):
     """Сериализатор для пользователей."""
     username = serializers.CharField(
         max_length=150,
         required=True,
         validators=(
             RegexValidator(r'^[\w.@+-]+$', message='Проверьте username!'),
+            UniqueValidator(queryset=User.objects.all()),
         )
     )
     is_subscribed = serializers.SerializerMethodField()
@@ -55,7 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance):
-        response = super(UserSerializer, self).to_representation(instance)
+        response = super(MyUserSerializer, self).to_representation(instance)
         response.pop("password", None)
         return response
 
@@ -127,7 +131,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для получения рецепта."""
     tags = TagSerializer(many=True)
-    author = UserSerializer(read_only=True, )
+    author = MyUserSerializer(read_only=True, )
     ingredients = IngredientRecipeSerializer(source='recipe', many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -159,7 +163,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и изменения рецепта."""
-    author = UserSerializer(read_only=True)
+    author = MyUserSerializer(read_only=True)
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
@@ -345,3 +349,25 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
                 'recipe': 'Данная рецепт уже в списке покупок'
             })
         return data
+
+
+class GetShoppingCartSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка покупок."""
+    class Meta:
+        model = ShoppingCart
+
+    def to_representation(self, instance):
+        response = {}
+        query = IngredientRecipe.objects \
+            .filter(recipe__in=instance.values('recipe')) \
+            .values('ingredient').annotate(score=Sum('amount'))
+        response['ingrideint'] = [
+            {
+                "name": Ingredient.objects.get(id=item.get('ingredient')).name,
+                "measurement_unit":
+                Ingredient.objects
+                .get(id=item.get('ingredient'))
+                .measurement_unit,
+                "sum": item.get('score'),
+            } for item in query]
+        return response

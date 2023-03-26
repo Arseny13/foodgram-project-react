@@ -15,7 +15,7 @@ from api.serializers import (FavoriteSerializer,
                              PasswordSerializer, RecipeCreateSerializer,
                              RecipeSerializer, ShoppingCartSerializer,
                              SubscriptionSerializer, TagSerializer,
-                             UserSerializer)
+                             MyUserSerializer, GetShoppingCartSerializer)
 from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription, User
 
@@ -23,7 +23,7 @@ from users.models import Subscription, User
 class UserViewSet(CreateListRetrieveViewSet):
     """Вьюсет для пользователей."""
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = MyUserSerializer
 
     def perform_create(self, serializer):
         if ('password' in self.request.data):
@@ -75,7 +75,7 @@ def get_subscription(request):
     """Вьюха для получение подписок авторизаваного пользователя."""
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
-        serializer = SubscriptionSerializer(
+        serializer = GetShoppingCartSerializer(
             user.follower.all(),
             many=True,
             context={'request': request}
@@ -158,9 +158,8 @@ def get_ShoppingCart(request):
     """Вьюха для получение списка покупок."""
     if request.user.is_authenticated:
         user = get_object_or_404(User, id=request.user.id)
-        serializer = ShoppingCartSerializer(
+        serializer = GetShoppingCartSerializer(
             user.user.all(),
-            many=True,
             context={'request': request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
