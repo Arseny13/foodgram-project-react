@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models import Q
 
 USER = 'user'
 ADMIN = 'admin'
@@ -46,6 +47,12 @@ class CustomUserManager(BaseUserManager):
         user.save()
         return user
 
+    def get_by_natural_key(self, username):
+        return self.get(
+            Q(**{self.model.USERNAME_FIELD: username})
+            | Q(**{self.model.EMAIL_FIELD: username})
+        )
+
 
 class User(AbstractUser):
     """Класс пользователя."""
@@ -78,6 +85,11 @@ class User(AbstractUser):
         max_length=15,
         default=USER,
     )
+
+    objects = CustomUserManager()
+
+    REQUIRED_FIELDS = ('email',)
+    USERNAME_FIELDS = 'email'
 
     @property
     def is_user(self):
