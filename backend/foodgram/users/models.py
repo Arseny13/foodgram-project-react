@@ -12,40 +12,7 @@ CHOICES = (
 
 
 class CustomUserManager(BaseUserManager):
-    """Класс для создания обычного пользователя/суперпользователя."""
-
-    def create_superuser(self, username, email, password, **kwargs):
-        """
-        Cоздает и сохраняет суперпользователя
-        с указанным адресом электронной почты и паролем.
-        """
-        if password is None:
-            raise TypeError('Superusers must have a password.')
-
-        kwargs.setdefault('is_staff', True)
-        kwargs.setdefault('is_superuser', True)
-        kwargs.setdefault('is_active', True)
-
-        return self.create_user(
-            username=username,
-            email=email,
-            password=password,
-            **kwargs
-        )
-
-    def create_user(self, username, email, password=None, **kwargs):
-        """
-        Cоздает и сохраняет пользователя
-        с указанным адресом электронной почты и паролем.
-        """
-        email = self.normalize_email(email)
-        user = self.model(username=username, email=email, **kwargs)
-        if password is None:
-            user.set_unusable_password()
-        else:
-            user.set_password(password)
-        user.save()
-        return user
+    """Класс для создания обычного пользователя по email."""
 
     def get_by_natural_key(self, username):
         return self.get(
@@ -112,11 +79,13 @@ class Subscription(models.Model):
     user = models.ForeignKey(
         User,
         related_name='follower',
+        verbose_name='Пользователь',
         on_delete=models.CASCADE,
     )
     subscriber = models.ForeignKey(
         User,
         related_name='following',
+        verbose_name='Подписчик',
         on_delete=models.CASCADE,
     )
 
@@ -125,6 +94,10 @@ class Subscription(models.Model):
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = (
+            models.CheckConstraint(
+                name='Нельзя на себя',
+                check=~models.Q(subscriber=models.F('user')),
+            ),
             models.UniqueConstraint(
                 fields=('user', 'subscriber'),
                 name="unique_subscriber_user"
@@ -132,4 +105,4 @@ class Subscription(models.Model):
         )
 
     def __str__(self) -> str:
-        return self.user.username
+        return f'{self.user.username} {self.subscriber.username}'

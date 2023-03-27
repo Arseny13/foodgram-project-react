@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import SAFE_METHODS
 
 from api.filters import RecipeFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
@@ -40,12 +41,16 @@ class TagViewSet(ListRetrieveViewSet):
     """Вьюсет для тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class IngredientViewSet(ListRetrieveViewSet):
     """Вьюсет для ингридиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -59,13 +64,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Метод изменения класса сериализера при разных методах."""
-        if (
-            self.action == 'create'
-            or self.action == 'update'
-            or self.action == 'partial_update'
-        ):
-            return RecipeCreateSerializer
-        return RecipeSerializer
+        if self.action in SAFE_METHODS:
+            return RecipeSerializer
+        return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(

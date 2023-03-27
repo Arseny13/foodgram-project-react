@@ -181,6 +181,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time'
                   )
 
+    def data_validate(self):
+        pass
+
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -220,7 +223,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 ingredient=ingredient
             ).delete()
         for ingredient in ingredients:
-            current_ingredient, status = Ingredient.objects.get_or_create(
+            current_ingredient, status = Ingredient.objects.get(
                 pk=ingredient.get('ingredient').get('id'))
             IngredientRecipe.objects.create(
                 ingredient=current_ingredient,
@@ -276,8 +279,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         ).data
 
     def get_recipes_count(self, obj):
-        count = len(Recipe.objects.filter(author=obj.subscriber))
-        return count
+        return Recipe.objects.filter(author=obj.subscriber).count()
 
     def validate(self, data):
         """Проверка на повтор."""
@@ -357,9 +359,9 @@ class GetShoppingCartSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         response = {}
-        query = IngredientRecipe.objects \
-            .filter(recipe__in=instance.values('recipe')) \
-            .values('ingredient').annotate(score=Sum('amount'))
+        query = IngredientRecipe.objects.filter(
+            recipe__in=instance.values('recipe')
+        ).values('ingredient').annotate(score=Sum('amount'))
         response['ingrideint'] = [
             {
                 "name": Ingredient.objects.get(id=item.get('ingredient')).name,
