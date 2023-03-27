@@ -1,6 +1,6 @@
 import base64
-
 import webcolors
+
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.db.models import Sum
@@ -181,10 +181,42 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time'
                   )
 
-    def data_validate(self):
-        pass
+    def data_validate(self, data):
+        if not isinstance(data.get('cooking_time'), int):
+            raise serializers.ValidationError({
+                'cooking_time': 'Проверьте cooking_time, должно быть числом'
+            })
+        if not data.get('tags'):
+            raise serializers.ValidationError({
+                'tags': 'Проверьте tags, нет id'
+            })
+        tags = set()
+        tags = [
+            tag for tag in data.get('tags')
+            if tag in tags or (tags.add(tag) or False)
+        ]
+        data['tags'] = tags
+        if not data.get('ingredients'):
+            raise serializers.ValidationError({
+                'ingredients': 'Проверьте ingredients, их нет'
+            })
+        ingredients = set()
+        for ingredient in data.get('ingredients'):
+            id = ingredient.get('ingredient').get('id')
+            if id not in ingredients:
+                ingredients.add(id)
+                if not Ingredient.objects.filter(pk=id).exists():
+                    raise serializers.ValidationError(
+                        {'ingredients': 'Проверьте ingredients, нет такого id'}
+                    )
+            else:
+                raise serializers.ValidationError(
+                    {'ingredients': 'Проверьте ingredients, есть повторы'}
+                )
+        return data
 
     def create(self, validated_data):
+        validated_data = self.data_validate(validated_data)
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
@@ -195,8 +227,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             )
         for ingredient in ingredients:
             ingredient_id = ingredient.get('ingredient').get('id')
-            current_ingredient, status = Ingredient.objects.get_or_create(
-                pk=ingredient_id)
+            current_ingredient = get_object_or_404(
+                Ingredient,
+                pk=ingredient_id
+            )
             IngredientRecipe.objects.create(
                 ingredient=current_ingredient,
                 recipe=recipe,
@@ -204,6 +238,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        validated_data = self.data_validate(validated_data)
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         Recipe.objects.filter(id=instance.id).update(**validated_data)
