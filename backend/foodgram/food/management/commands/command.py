@@ -22,9 +22,6 @@ class Command(BaseCommand):
             with open(file, "r", encoding="utf-8-sig") as json_file:
                 data = json.load(json_file)
                 for row in data:
-                    name = row.get('name')
-                    if Ingredient.objects.filter(name=name).exists():
-                        continue
                     Ingredient.objects.update_or_create(
                         **row
                     )
