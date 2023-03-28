@@ -1,15 +1,3 @@
-from django.contrib.auth.hashers import check_password, make_password
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
-from rest_framework import filters, status, viewsets
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import SAFE_METHODS
-
 from api.filters import RecipeFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
                         ListRetrieveViewSet)
@@ -20,7 +8,18 @@ from api.serializers import (FavoriteSerializer, GetShoppingCartSerializer,
                              RecipeCreateSerializer, RecipeSerializer,
                              ShoppingCartSerializer, SubscriptionSerializer,
                              TagSerializer)
+from django.contrib.auth.hashers import check_password, make_password
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import api_view
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from users.models import Subscription, User
 
 
