@@ -8,6 +8,13 @@ ___
 **Изимов Арсений**  - студент Яндекс.Практикума Когорта 17+
 https://github.com/Arseny13
 
+
+<h4>Проект:</h4>
+
+https://github.com/Arseny13/foodgram-project-react
+
+Скачать: git@github.com:Arseny13/foodgram-project-react.git
+
 <h4>Cайт</h4>
 
 - сайт: arsenyxiii.ddns.net
