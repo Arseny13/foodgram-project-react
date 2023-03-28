@@ -63,7 +63,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         """Метод изменения класса сериализера при разных методах."""
-        if self.action in SAFE_METHODS:
+        if self.request.method in SAFE_METHODS:
             return RecipeSerializer
         return RecipeCreateSerializer
 
