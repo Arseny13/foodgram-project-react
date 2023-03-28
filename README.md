@@ -10,9 +10,11 @@ https://github.com/Arseny13
 
 <h4>Cайт</h4>
 
-- сайт: пока что ток локально
+- сайт: arsenyxiii.ddns.net
+- ip: 51.250.88.11
 
-
+Cуперпользователь
+{ "username": "admin", "password": "admin", "email": "admin@admin.ru }
 
 
 <h2>Техническое описание проекта</h2>

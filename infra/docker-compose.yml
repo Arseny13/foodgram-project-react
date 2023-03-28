@@ -9,7 +9,7 @@ services:
       - ./.env
 
   backend:
-    image: arseny13/foodgram:v1 
+    image: arseny13/foodgram:v1
     restart: always
     volumes:
       - static_value:/app/static/

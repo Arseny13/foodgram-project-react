@@ -195,7 +195,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             tag for tag in data.get('tags')
             if tag in tags or (tags.add(tag) or False)
         ]
-        data['tags'] = tags
+        if tags:
+            raise serializers.ValidationError({
+                'tags': 'Проверьте tags, есть поавторы'
+            })
         if not data.get('ingredients'):
             raise serializers.ValidationError({
                 'ingredients': 'Проверьте ingredients, их нет'

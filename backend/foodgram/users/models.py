@@ -14,6 +14,39 @@ CHOICES = (
 class CustomUserManager(BaseUserManager):
     """Класс для создания обычного пользователя по email."""
 
+    def create_superuser(self, username, email, password, **kwargs):
+        """
+        Cоздает и сохраняет суперпользователя
+        с указанным адресом электронной почты и паролем.
+        """
+        if password is None:
+            raise TypeError('Superusers must have a password.')
+
+        kwargs.setdefault('is_staff', True)
+        kwargs.setdefault('is_superuser', True)
+        kwargs.setdefault('is_active', True)
+
+        return self.create_user(
+            username=username,
+            email=email,
+            password=password,
+            **kwargs
+        )
+
+    def create_user(self, username, email, password=None, **kwargs):
+        """
+        Cоздает и сохраняет пользователя
+        с указанным адресом электронной почты и паролем.
+        """
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **kwargs)
+        if password is None:
+            user.set_unusable_password()
+        else:
+            user.set_password(password)
+        user.save()
+        return user
+
     def get_by_natural_key(self, username):
         return self.get(
             Q(**{self.model.USERNAME_FIELD: username})
