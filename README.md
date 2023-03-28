@@ -24,7 +24,7 @@ Cуперпользователь
 { "username": "admin", "password": "admin", "email": "admin@admin.ru }
 
 <h4>Команды на сайте после исправлений</h4>
-scp nginx.conf arseny@51.250.88.11:/home/arseny/foodgram/infra
+scp nginx.conf user@51.250.88.11:/home/user/foodgram/infra
 
 docker-compose build --no-cache
 docker-compose up --force-recreate
