@@ -404,16 +404,16 @@ class GetShoppingCartSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         response = {}
+        shop_list = ''
         query = IngredientRecipe.objects.filter(
             recipe__in=instance.values('recipe')
         ).values('ingredient').annotate(score=Sum('amount'))
-        response['ingrideint'] = [
-            {
-                "name": Ingredient.objects.get(id=item.get('ingredient')).name,
-                "measurement_unit":
-                Ingredient.objects
-                .get(id=item.get('ingredient'))
-                .measurement_unit,
-                "sum": item.get('score'),
-            } for item in query]
+        for item in query:
+            name = Ingredient.objects.get(id=item.get('ingredient')).name
+            measurement_unit = Ingredient.objects.get(
+                id=item.get('ingredient')).measurement_unit,
+            sum = item.get('score')
+            str = f'{name} {measurement_unit} - {sum} \n'
+            shop_list += str
+        response['shop_list'] = shop_list
         return response

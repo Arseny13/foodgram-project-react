@@ -196,10 +196,10 @@ def get_ShoppingCart(request):
             user.user.all(),
             context={'request': request}
         )
-        response = HttpResponse(content_type='text/plain; charset=utf8')
-        response['Content-Disposition'] = 'attachment; filename="filename.txt"'
-        response.write(serializer.data)
-        return response
+        return HttpResponse(
+            serializer.data.get('shop_list'),
+            content_type='text/plain; charset=utf8'
+        )
     return Response(
         'Вы не авторизованы',
         status=status.HTTP_401_UNAUTHORIZED
