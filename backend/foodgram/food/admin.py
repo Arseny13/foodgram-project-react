@@ -20,8 +20,9 @@ class TagAdmin(admin.ModelAdmin):
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'name',
-                    'measurement_unit'
+                    'measurement_unit',
                     )
+    list_filter = ('name',)
     list_editable = ('name',)
     search_fields = ('name',)
     empty_value_display = '-пусто)))-'
@@ -42,14 +43,20 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'name',
                     'author',
-                    'pub_date'
+                    'count_favorite',
+                    'pub_date',
                     )
+    readonly_fields = ('count_favorite',)
+    list_filter = ('name', 'author', 'tags')
     list_editable = ('name',)
     inlines = (
         RecipeTagInline, RecipeIngredientInline,
     )
     search_fields = ('author', 'name', 'tag')
     empty_value_display = '-пусто)))-'
+
+    def count_favorite(self, obj):
+        return obj.favorites.all().count()
 
 
 @admin.register(Favorite)
