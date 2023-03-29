@@ -1,4 +1,16 @@
-from api.filters import RecipeFilter
+from django.contrib.auth.hashers import check_password, make_password
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import api_view
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from api.filters import RecipeFilter, IngredientSearchFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
                         ListRetrieveViewSet)
 from api.permissions import IsReadOnly
@@ -8,18 +20,6 @@ from api.serializers import (FavoriteSerializer, GetShoppingCartSerializer,
                              RecipeCreateSerializer, RecipeSerializer,
                              ShoppingCartSerializer, SubscriptionSerializer,
                              TagSerializer)
-from django.contrib.auth.hashers import check_password, make_password
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet
-from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
-from rest_framework import filters, status, viewsets
-from rest_framework.decorators import api_view
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import SAFE_METHODS
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from users.models import Subscription, User
 
 
@@ -47,8 +47,8 @@ class IngredientViewSet(ListRetrieveViewSet):
     """Вьюсет для ингридиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
+    filter_backends = (IngredientSearchFilter,)
+    search_fields = ('^name',)
     pagination_class = None
 
 
@@ -82,10 +82,23 @@ class GetSubscription(APIView, LimitOffsetPagination):
             user = get_object_or_404(User, id=request.user.id)
             quersy = user.follower.all()
             results = self.paginate_queryset(quersy, request, view=self)
+            recipes_limit = self.request.query_params.get(
+                'recipes_limit'
+            )
+            try:
+                int(recipes_limit)
+            except ValueError:
+                return Response(
+                    'Проверьте recipes_limit',
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             serializer = SubscriptionSerializer(
                 results,
                 many=True,
-                context={'request': request}
+                context={
+                    'request': request,
+                    'recipes_limit': int(recipes_limit)
+                }
             )
 
             return self.get_paginated_response(serializer.data)
@@ -109,6 +122,9 @@ class SubscribeViewSet(CreateDestroyViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['subscription_id'] = self.kwargs.get('user_id')
+        context['recipes_limit'] = int(self.request.query_params.get(
+            'recipes_limit'
+        ))
         return context
 
     def perform_create(self, serializer):

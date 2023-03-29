@@ -1,6 +1,12 @@
 import django_filters
 from food.models import Recipe
 
+from rest_framework import filters
+
+
+class IngredientSearchFilter(filters.SearchFilter):
+    search_param = "name"
+
 
 class RecipeFilter(django_filters.FilterSet):
     """Класс FilterSet для фильтрации рецепта."""

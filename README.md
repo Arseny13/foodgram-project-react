@@ -24,11 +24,16 @@ Cуперпользователь
 { "username": "admin", "password": "admin", "email": "admin@admin.ru }
 
 <h4>Команды на сайте после исправлений</h4>
-scp nginx.conf user@51.250.88.11:/home/user/foodgram/infra
 
-docker-compose build --no-cache
-docker-compose up --force-recreate
-docker-compose exec backend python manage.py migrate
+-   scp nginx.conf user@51.250.88.11:/home/user/foodgram/infra
+
+-   docker-compose build --no-cache
+
+-   docker-compose up --force-recreate
+
+-   docker-compose exec backend python manage.py migrate
+
+-   docker-compose exec backend python manage.py collectstatic --no-input 
 
 
 <h2>Техническое описание проекта</h2>
