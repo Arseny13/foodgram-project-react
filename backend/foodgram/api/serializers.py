@@ -411,7 +411,7 @@ class GetShoppingCartSerializer(serializers.ModelSerializer):
         for item in query:
             name = Ingredient.objects.get(id=item.get('ingredient')).name
             measurement_unit = Ingredient.objects.get(
-                id=item.get('ingredient')).measurement_unit,
+                id=item.get('ingredient')).measurement_unit
             sum = item.get('score')
             str = f'{name} {measurement_unit} - {sum} \n'
             shop_list += str
