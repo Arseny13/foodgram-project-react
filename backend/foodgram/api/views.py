@@ -5,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -59,7 +59,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     permission_classes = (IsReadOnly,)
     ordering_fields = ('pub_date',)
-    ordering = ('pub_date',)
+    ordering = ('-pub_date',)
 
     def get_serializer_class(self):
         """Метод изменения класса сериализера при разных методах."""
@@ -85,19 +85,20 @@ class GetSubscription(APIView, LimitOffsetPagination):
             recipes_limit = self.request.query_params.get(
                 'recipes_limit'
             )
-            try:
-                int(recipes_limit)
-            except ValueError:
-                return Response(
-                    'Проверьте recipes_limit',
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            if recipes_limit is not None:
+                try:
+                    recipes_limit = int(recipes_limit)
+                except ValueError:
+                    return Response(
+                        'Проверьте recipes_limit',
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             serializer = SubscriptionSerializer(
                 results,
                 many=True,
                 context={
                     'request': request,
-                    'recipes_limit': int(recipes_limit)
+                    'recipes_limit': recipes_limit
                 }
             )
 
@@ -111,7 +112,7 @@ class GetSubscription(APIView, LimitOffsetPagination):
 class SubscribeViewSet(CreateDestroyViewSet):
     """Вьюсет для подписок."""
     serializer_class = SubscriptionSerializer
-    permission_classes = (IsReadOnly,)
+    permission_classes = (IsAuthenticated,)
 
     def get_user(self):
         return get_object_or_404(User, pk=self.kwargs.get('user_id'))
@@ -122,9 +123,18 @@ class SubscribeViewSet(CreateDestroyViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['subscription_id'] = self.kwargs.get('user_id')
-        context['recipes_limit'] = int(self.request.query_params.get(
+        recipes_limit = self.request.query_params.get(
             'recipes_limit'
-        ))
+        )
+        if recipes_limit is not None:
+            try:
+                recipes_limit = int(recipes_limit)
+            except ValueError:
+                return Response(
+                    'Проверьте recipes_limit',
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        context['recipes_limit'] = recipes_limit
         return context
 
     def perform_create(self, serializer):
@@ -147,7 +157,7 @@ class SubscribeViewSet(CreateDestroyViewSet):
 class FavoriteViewSet(CreateDestroyViewSet):
     """Вьюсет для избранного."""
     serializer_class = FavoriteSerializer
-    permission_classes = (IsReadOnly,)
+    permission_classes = (IsAuthenticated,)
 
     def get_recipe(self):
         return get_object_or_404(Recipe, pk=self.kwargs.get('recipe_id'))
@@ -186,7 +196,7 @@ def get_ShoppingCart(request):
             user.user.all(),
             context={'request': request}
         )
-        response = HttpResponse(content_type='text/plain')
+        response = HttpResponse(content_type='text/plain; charset=utf8')
         response['Content-Disposition'] = 'attachment; filename="filename.txt"'
         response.write(serializer.data)
         return response

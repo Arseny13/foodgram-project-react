@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 USER = 'user'
 ADMIN = 'admin'
@@ -92,15 +93,15 @@ class Subscription(models.Model):
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
         constraints = (
-            models.CheckConstraint(
-                name='Нельзя на себя',
-                check=~models.Q(subscriber=models.F('user')),
-            ),
             models.UniqueConstraint(
                 fields=('user', 'subscriber'),
                 name="unique_subscriber_user"
             ),
         )
+
+    def clean(self):
+        if self.user == self.subscriber:
+            raise ValidationError('нельзя на себя')
 
     def __str__(self) -> str:
         return f'{self.user.username} {self.subscriber.username}'

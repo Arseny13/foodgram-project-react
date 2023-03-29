@@ -4,6 +4,14 @@ from django.db import models
 from users.models import User
 
 
+class CollorUpperField(ColorField):
+    def __init__(self, *args, **kwargs):
+        super(CollorUpperField, self).__init__(*args, **kwargs)
+
+    def get_prep_value(self, value):
+        return str(value).upper()
+
+
 class Tag(models.Model):
     """Класс тега."""
     name = models.CharField(
@@ -12,7 +20,7 @@ class Tag(models.Model):
         max_length=100,
         help_text='Введите название тега',
     )
-    color = ColorField(unique=True)
+    color = CollorUpperField(unique=True)
     slug = models.SlugField(
         'Cлаг тега',
         unique=True,

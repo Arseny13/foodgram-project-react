@@ -260,8 +260,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 ingredient=ingredient
             ).delete()
         for ingredient in ingredients:
-            current_ingredient, status = Ingredient.objects.get(
-                pk=ingredient.get('ingredient').get('id'))
+            ingredient_id = ingredient.get('ingredient').get('id')
+            current_ingredient = get_object_or_404(
+                Ingredient, pk=ingredient_id
+            )
             IngredientRecipe.objects.create(
                 ingredient=current_ingredient,
                 recipe=instance,
@@ -309,7 +311,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes_limit = self.context.get('recipes_limit', None)
-        recipes_limit = int(recipes_limit)
         if recipes_limit is not None:
             queryset = Recipe.objects.filter(
                 author=obj.subscriber
