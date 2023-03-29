@@ -1,15 +1,16 @@
 import base64
-
 import webcolors
+
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
-from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
-                         ShoppingCart, Tag, TagRecipe)
 from rest_framework import serializers
 from rest_framework.relations import StringRelatedField
 from rest_framework.validators import UniqueValidator
+
+from food.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                         ShoppingCart, Tag, TagRecipe)
 from users.models import Subscription, User
 
 

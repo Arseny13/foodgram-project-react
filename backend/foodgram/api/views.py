@@ -4,15 +4,14 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
-from api.filters import RecipeFilter, IngredientSearchFilter
+from api.filters import IngredientSearchFilter, RecipeFilter
 from api.mixins import (CreateDestroyViewSet, CreateListRetrieveViewSet,
                         ListRetrieveViewSet)
+from api.pagination import PageNumberAsLimitOffset
 from api.permissions import IsReadOnly
 from api.serializers import (FavoriteSerializer, GetShoppingCartSerializer,
                              IngredientSerializer, MeSerializer,
@@ -20,6 +19,7 @@ from api.serializers import (FavoriteSerializer, GetShoppingCartSerializer,
                              RecipeCreateSerializer, RecipeSerializer,
                              ShoppingCartSerializer, SubscriptionSerializer,
                              TagSerializer)
+from food.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription, User
 
 
@@ -73,7 +73,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
 
-class GetSubscription(APIView, LimitOffsetPagination):
+class GetSubscription(APIView, PageNumberAsLimitOffset):
     """Класс для переопределения запросов GET."""
 
     def get(self, request):

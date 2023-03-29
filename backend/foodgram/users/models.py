@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-from django.core.exceptions import ValidationError
 
 USER = 'user'
 ADMIN = 'admin'
