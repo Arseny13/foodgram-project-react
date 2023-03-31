@@ -2,7 +2,7 @@ import django_filters
 
 from rest_framework import filters
 
-from food.models import Recipe
+from food.models import Recipe, Tag
 
 
 class IngredientSearchFilter(filters.SearchFilter):
@@ -11,8 +11,10 @@ class IngredientSearchFilter(filters.SearchFilter):
 
 class RecipeFilter(django_filters.FilterSet):
     """Класс FilterSet для фильтрации рецепта."""
-    tags = django_filters.CharFilter(
+    tags = django_filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tag.objects.all()
     )
     is_favorited = django_filters.NumberFilter(
         method='filter_favorited', label='is_favorited'
